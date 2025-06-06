@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
+const statsController = require("../controllers/statsController");
 const authController = require("../controllers/authController"); 
 const gymDetailsController = require("../controllers/gymDetailsController");
 const planController = require("../controllers/planController");
@@ -27,6 +28,7 @@ router.post("/gym-details", authController.isAuthenticated, authController.isAdm
 router.put("/gym-details/:id", authController.isAuthenticated, authController.isAdmin, gymDetailsController.updateGymDetail);
 router.delete("/gym-details/:id", authController.isAuthenticated, authController.isAdmin, gymDetailsController.deleteGymDetail);
 
+router.get("/stats", authController.isAuthenticated, authController.isAdmin, statsController.getStats);
 router.get("/plans/:id", authController.isAuthenticated, authController.isAdmin, planController.getPlanById);
 router.post("/plans", authController.isAuthenticated, authController.isAdmin, planController.createPlan);
 router.put("/plans/:id", authController.isAuthenticated, authController.isAdmin, planController.updatePlan);
