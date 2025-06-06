@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
 
-const authController = require("./controllers/authController");
-const gymDetailsController = require("./controllers/gymDetailsController");
-const planController = require("./controllers/planController");
-const userController = require("./controllers/userController");
+const authController = require("../controllers/authController"); // Adjusted path
+const gymDetailsController = require("../controllers/gymDetailsController");
+const planController = require("../controllers/planController");
+const userController = require("../controllers/userController");
 
 const errorHandler = (error, req, res, next) => {
   console.error("Error:", error);

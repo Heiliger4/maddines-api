@@ -8,7 +8,6 @@ const Plan = require("./plan");
 const PaymentMethod = require("./paymentMethod");
 const Role = require("./role");
 const Transaction = require("./transaction");
-const RefreshToken = require("./refreshToken");
 
 // --------------------
 // Associations
@@ -65,14 +64,6 @@ Transaction.belongsTo(PaymentMethod, {
   as: "paymentMethod",
 });
 
-// One User has many RefreshTokens
-User.hasMany(RefreshToken, {
-  foreignKey: "userId",
-  as: "refreshTokens",
-  onDelete: "CASCADE",
-});
-RefreshToken.belongsTo(User, { foreignKey: "userId", as: "user" });
-
 // --------------------
 // Export models and sequelize instance
 // --------------------
@@ -84,7 +75,6 @@ const models = {
   PaymentMethod,
   Role,
   Transaction,
-  RefreshToken,
 };
 
 module.exports = {
