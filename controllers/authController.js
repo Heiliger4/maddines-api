@@ -1,6 +1,6 @@
-const sessions = {};
+require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const { User } = require("../models");
-const crypto = require("crypto");
 
 exports.login = async (req, res) => {
   try {
@@ -14,22 +14,16 @@ exports.login = async (req, res) => {
       });
     }
 
-    const sessionToken = crypto.randomBytes(32).toString("hex");
-    sessions[sessionToken] = user.id;
-
-    // //
-    // console.log({
-    //   id: user.user_id,
-    //   phone_number: user.phone_number,
-    //   role: user.role_id === 1 ? "admin" : "user",
-    // });
-    // //
-
+    const token = jwt.sign(
+      { user_id: user.user_id, role_id: user.role_id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
 
     return res.status(200).json({
       success: true,
       message: "Login successful",
-      token: sessionToken,
+      token,
       user: {
         id: user.user_id,
         phone_number: user.phone_number,
@@ -45,40 +39,38 @@ exports.login = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
-  const token = req.headers['authorization']?.split(' ')[1];
-  if (token && sessions[token]) {
-    delete sessions[token];
-  }
   return res.json({ success: true, message: "Logged out" });
 };
 
 exports.isAuthenticated = async (req, res, next) => {
   try {
-    const token = req.headers['authorization'];
-    if (!token || !token.startsWith("Bearer ")) {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ success: false, message: "Missing token" });
     }
 
-    const sessionToken = token.split(" ")[1];
-    const userId = sessions[sessionToken];
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (!userId) {
-      return res.status(401).json({ success: false, message: "Invalid token" });
-    }
-
-    const user = await User.findByPk(userId);
+    const user = await User.findByPk(decoded.user_id);
     if (!user) {
       return res.status(401).json({ success: false, message: "User not found" });
     }
 
     req.user = {
-      user_id: user.id,
+      user_id: user.user_id,
       role_id: user.role_id,
       role: user.role_id === 1 ? "admin" : "user",
     };
 
     next();
   } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ success: false, message: "Token expired" });
+    }
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ success: false, message: "Invalid token" });
+    }
     return res.status(500).json({
       success: false,
       message: "An error occurred during authentication",
