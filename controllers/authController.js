@@ -1,18 +1,26 @@
+const sessions = {};
 const { User } = require("../models");
+const crypto = require("crypto");
 
 exports.login = async (req, res) => {
   try {
     const { phone_number, password } = req.body;
     const user = await User.findOne({ where: { phone_number } });
+
     if (!user || user.password !== password) {
       return res.status(401).json({
         success: false,
         message: "Invalid phone number or password",
       });
     }
+
+    const sessionToken = crypto.randomBytes(32).toString("hex");
+    sessions[sessionToken] = user.id;
+
     return res.status(200).json({
       success: true,
       message: "Login successful",
+      token: sessionToken,
       user: {
         id: user.id,
         phone_number: user.phone_number,
@@ -20,7 +28,6 @@ exports.login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Login error:", error);
     return res.status(500).json({
       success: false,
       message: "An error occurred during login",
@@ -30,28 +37,31 @@ exports.login = async (req, res) => {
 
 exports.isAuthenticated = async (req, res, next) => {
   try {
-    const userId = req.body.userId || req.headers['user-id'];
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "User ID is required",
-      });
+    const token = req.headers['authorization'];
+    if (!token || !token.startsWith("Bearer ")) {
+      return res.status(401).json({ success: false, message: "Missing token" });
     }
+
+    const sessionToken = token.split(" ")[1];
+    const userId = sessions[sessionToken];
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Invalid token" });
+    }
+
     const user = await User.findByPk(userId);
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "User not found",
-      });
+      return res.status(401).json({ success: false, message: "User not found" });
     }
+
     req.user = {
       user_id: user.id,
       role_id: user.role_id,
       role: user.role_id === 1 ? "admin" : "user",
     };
+
     next();
   } catch (error) {
-    console.error("Authentication error:", error);
     return res.status(500).json({
       success: false,
       message: "An error occurred during authentication",
