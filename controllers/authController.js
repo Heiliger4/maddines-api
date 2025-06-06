@@ -17,12 +17,21 @@ exports.login = async (req, res) => {
     const sessionToken = crypto.randomBytes(32).toString("hex");
     sessions[sessionToken] = user.id;
 
+    // //
+    // console.log({
+    //   id: user.user_id,
+    //   phone_number: user.phone_number,
+    //   role: user.role_id === 1 ? "admin" : "user",
+    // });
+    // //
+
+
     return res.status(200).json({
       success: true,
       message: "Login successful",
       token: sessionToken,
       user: {
-        id: user.id,
+        id: user.user_id,
         phone_number: user.phone_number,
         role: user.role_id === 1 ? "admin" : "user",
       },
@@ -33,6 +42,14 @@ exports.login = async (req, res) => {
       message: "An error occurred during login",
     });
   }
+};
+
+exports.logout = (req, res) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  if (token && sessions[token]) {
+    delete sessions[token];
+  }
+  return res.json({ success: true, message: "Logged out" });
 };
 
 exports.isAuthenticated = async (req, res, next) => {
