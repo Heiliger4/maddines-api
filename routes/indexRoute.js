@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const authController = require("../controllers/authController"); // Adjusted path
+const authController = require("../controllers/authController"); 
 const gymDetailsController = require("../controllers/gymDetailsController");
 const planController = require("../controllers/planController");
 const userController = require("../controllers/userController");
@@ -15,14 +15,18 @@ const errorHandler = (error, req, res, next) => {
   });
 };
 
+// Public routes
 router.post("/login", authController.login);
 
+// Shared routes (authenticated users - both admin and regular)
 router.get("/gym-details", authController.isAuthenticated, gymDetailsController.getGymDetails);
+router.get("/plans", authController.isAuthenticated, planController.getAllPlans);
+
+// Admin-only routes
 router.post("/gym-details", authController.isAuthenticated, authController.isAdmin, gymDetailsController.createGymDetail);
 router.put("/gym-details/:id", authController.isAuthenticated, authController.isAdmin, gymDetailsController.updateGymDetail);
 router.delete("/gym-details/:id", authController.isAuthenticated, authController.isAdmin, gymDetailsController.deleteGymDetail);
 
-router.get("/plans", authController.isAuthenticated, planController.getAllPlans);
 router.get("/plans/:id", authController.isAuthenticated, authController.isAdmin, planController.getPlanById);
 router.post("/plans", authController.isAuthenticated, authController.isAdmin, planController.createPlan);
 router.put("/plans/:id", authController.isAuthenticated, authController.isAdmin, planController.updatePlan);
@@ -35,6 +39,7 @@ router.put("/users/:id", authController.isAuthenticated, authController.isAdmin,
 router.patch("/users/:id/toggle-status", authController.isAuthenticated, authController.isAdmin, userController.toggleUserStatus);
 router.delete("/users/:id", authController.isAuthenticated, authController.isAdmin, userController.deleteUser);
 
+// Error handler
 router.use(errorHandler);
 
 module.exports = router;
