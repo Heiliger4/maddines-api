@@ -225,7 +225,7 @@ exports.deleteUser = async (req, res) => {
 
     const userId = req.params.id;
 
-    const user = await Users.findByPk(userId);
+    const user = await User.findByPk(userId);
     if (!user) {
       return res.status(404).json({
         success: false,
